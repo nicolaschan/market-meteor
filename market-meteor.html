@@ -1,0 +1,470 @@
+<head>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<title>Minecraft Market</title>
+</head>
+<body>
+	
+</body>
+
+<template name="main">
+	<nav class="green darken-2">
+		<div class="nav-wrapper">
+			<a href="/" class="brand-logo left">&nbsp;Minecraft Market</a>
+			{{#if currentUser}}
+			<ul id="nav-mobile" class="right">
+				<li><a href="/store">Store</a></li>
+				<li><a href="/money">Money</a></li>
+				<li><a href="/users">Users</a></li>
+				<li><a href="/messages">Messages</a></li>
+				{{> accountDropdown}}
+			</ul>
+			{{/if}}
+		</div>
+	</nav>
+	<div class="container">
+		{{> yield}}
+	</div>
+</template>
+
+<template name="accountDropdown">
+	<li>
+		<a class="dropdown-button" href="#!" data-activates="accountDropdown">{{currentUser.username}}<i class="material-icons right">arrow_drop_down</i></a>
+	</li>
+	<ul id="accountDropdown" class="dropdown-content">
+		<li><a href="/my-profile">My Profile</a></li>
+		<li><a href="#" class="logout">Log out</a></li>
+	</ul>
+</template>
+
+<template name="myProfile">
+	<h1>My Profile</h1>
+	<div class="row">
+		<form class="col s12">
+			<div class="input-field col s12">
+				<i class="material-icons prefix">account_circle</i>
+				<input id="icon_prefix" type="text" class="validate" name="username" value="{{currentUser.username}}" disabled>
+				<label for="icon_prefix">Username</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">link</i>
+				<input id="icon_prefix" type="url" class="validate" name="image" value="{{account.image}}">
+				<label for="icon_prefix">Image link</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">mode_edit</i>
+				<input id="icon_prefix" type="text" class="validate" name="tagline" value="{{account.tagline}}">
+				<label for="icon_prefix">Tagline</label>
+			</div>
+			<div class="input-field col s12 m12">
+				<i class="material-icons prefix">mode_edit</i>
+				<textarea id="icon_prefix2" class="materialize-textarea active" name="description">{{account.description}}</textarea>
+				<label for="icon_prefix2">Account description</label>
+			</div>
+			<button class="btn waves-effect waves-light" type="submit" name="submit">
+				Save changes <i class="material-icons right">send</i>
+			</button>
+			<script>
+				$(function() {
+					Materialize.updateTextFields();
+				});
+			</script>
+		</form>
+	</div>
+</template>
+
+<template name="profile">
+	<div class="card large">
+		<div class="card-image">
+			<img src="{{image}}">
+		</div>
+		<div class="card-content">
+			{{#if username}}
+			<span class="card-title grey-text text-darken-4">{{username}}</span>
+			<p>{{#if tagline}}{{tagline}}{{else}}<i>No tagline provided</i>{{/if}}</p>
+			<hr>
+			<p>{{#if description}}{{description}}{{else}}<i>No description provided</i>{{/if}}</p>
+			{{else}}
+			<span class="card-title grey-text text-darken-4"><i>No user found</i></span>
+			{{/if}}
+		</div>
+		<div class="card-action">
+			<a href="/messages/{{username}}">Send message</a>
+		</div>
+	</div>
+</template>
+
+<template name="users">
+	<h1>Users</h1>
+	<div class="row">
+		<table class="highlight">
+			<thead>
+				<tr>
+					<th>Username</th>
+					<th>Balance</th>
+					<th>Tagline</th>
+					<th>Badges</th>
+					<th>Profile</th>
+				</tr>
+			</thead>
+			<tbody>
+				{{#each users}}
+					{{> userTableRow}}
+				{{/each}}
+			</tbody>
+		</table>
+	</div>
+</template>
+<template name="userTableRow">
+	<tr>
+		<td>{{username}}</td>
+		<td>${{balance}}</td>
+		<td>{{tagline}}</td>
+		<td>{{#if trusted}}<i class="material-icons prefix">verified_user</i>{{/if}}</td>
+		<td><a href="/profile/{{username}}">View profile</a></td>
+	</tr>
+</template>
+
+<template name="store">
+	<h1>Store</h1>
+	<div class="row">
+		<div class="col s12">
+			<ul class="tabs">
+				<li class="tab col s6"><a href="#" class="active" id="other">Store</a></li>
+				<li class="tab col s6"><a href="#" id="my">My items</a></li>
+			</ul>
+			<script type="text/javascript">
+				$('ul.tabs').tabs();
+			</script>
+		</div>
+	</div>
+	<div class="row">
+		{{#each items}}
+			{{> item}}
+		{{/each}}
+	</div>
+	<div id="modal1" class="modal bottom-sheet">
+		<form id="addItem">
+		<div class="modal-content">
+			<h4>Add new item</h4>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">title</i>
+				<input id="icon_prefix" type="text" class="validate" name="name">
+				<label for="icon_prefix">Title</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">link</i>
+				<input id="icon_prefix" type="url" class="validate" name="image">
+				<label for="icon_prefix">Image link</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">add</i>
+				<input id="icon_prefix" type="number" class="validate" name="quantity" step="1" min="0">
+				<label for="icon_prefix">Quantity</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">attach_money</i>
+				<input id="icon_prefix" type="number" class="validate" name="price" step="0.01" min="0.01">
+				<label for="icon_prefix">Price (each)</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">mode_edit</i>
+				<textarea id="icon_prefix2" class="materialize-textarea active" name="description"></textarea>
+				<label for="icon_prefix2">Description</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">mode_edit</i>
+				<textarea id="icon_prefix2" class="materialize-textarea active" name="instructions"></textarea>
+				<label for="icon_prefix2">Buyer instructions</label>
+			</div>
+		</div>
+			<div class="modal-footer">
+				<button class="modal-action modal-close waves-effect waves-green btn-flat" type="submit" name="submit">Add Item</button>
+				<a href="#" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+			</div>
+		</form>
+	</div>
+	<div class="fixed-action-btn" style="bottom: 30px; right: 30px">
+		<a class="btn btn-floating btn-large waves-effect waves-light green tooltipped modal-trigger" data-position="left" data-delay="50" data-tooltip="Add new item" href="#modal1">
+			<i class="large material-icons">add</i>
+		</a>
+	</div>
+	<div id="confirmModal" class="modal">
+		<form id="confirmForm">
+			<div class="modal-content">
+			<h4>Confirm purchase</h4>
+				<div class="input-field col s12">
+					<i class="material-icons prefix">add</i>
+					<input id="confirmQuantity" type="number" class="validate" name="quantity" step="1" min="1" max="{{maxQuantity}}" value="1">
+					<label for="confirmQuantity">Quantity</label>
+					<script type="text/javascript">
+						Materialize.updateTextFields();
+					</script>
+				</div>
+			</div>
+			<div class="modal-footer">
+				{{#if getTotalPrice}}
+				<button class="modal-action modal-close waves-effect waves-green btn-flat" type="submit" name="submit">Pay ${{getTotalPrice}}</button>
+				{{/if}}
+				<a href="#" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+			</div>
+		</form>
+		<script type="text/javascript">
+			$('.tooltipped').tooltip({delay: 50});
+			$('.modal-trigger').leanModal();
+		</script>
+	</div>
+</template>
+<template name="item">
+	<div class="col s12 m6 l4">
+		<div class="card" style="padding: 10px">
+			<div class="card-image waves-effect waves-block waves-light">
+				<img class="activator" src="{{image}}">
+			</div>
+			<div class="card-content">
+				<span class="card-title activator">{{name}}<i class="material-icons right">more_vert</i></span>
+				{{#if isCurrentUser owner}}
+				<p><a href="#">Edit</a><span class="right">${{price}} each</span></p>
+				{{else}}
+				<p>Sold by {{owner_username}}<a item="{{_id}}" href="#confirmModal" class="buy-item modal-trigger right">Buy for ${{price}} each</a></p>
+				{{/if}}
+			</div>
+			<div class="card-reveal">
+				<span class="card-title">{{name}}<i class="material-icons right">close</i></span>
+				<p>{{description}}</p>
+				<hr>
+				<p>{{quantity}} available</p>
+			</div>
+		</div>
+	</div>
+</template>
+
+<template name="money">
+	<h1>Money</h1>
+	<div class="row">
+		<div class="card blue-grey darken-2">
+			<div class="card-content white-text">
+				<span class="card-title">Your balance</span>
+				<h2>${{balance}}</h2>
+			</div>
+			<div class="card-action">
+				<a href="/transactions">Full transaction history</a>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col s12 m7">
+			<div class="row">
+				<h4>Send Money</h4>
+				<form>
+					<div class="input-field col s12">
+						<i class="material-icons prefix">account_circle</i>
+						<input id="icon_prefix" type="text" class="validate" name="to">
+						<label for="icon_prefix">Recipient</label>
+					</div>
+					<div class="input-field col s12">
+						<i class="material-icons prefix">attach_money</i>
+						<input id="icon_prefix" type="number" class="validate" name="amount" step="0.01" min="0.01">
+						<label for="icon_prefix">Amount</label>
+					</div>
+					<div class="input-field col s12">
+						<i class="material-icons prefix">mode_edit</i>
+						<input id="icon_prefix" type="text" class="validate" name="memo">
+						<label for="icon_prefix">Memo</label>
+					</div>
+					<button class="btn waves-effect waves-light" type="submit" name="submit">
+						Send money <i class="material-icons right">send</i>
+					</button>
+				</form>
+			</div>
+		</div>
+		<div class="col s12 m5">
+			<div class="row">
+				<h4>Recent Transactions</h4>
+				<ul class="collapsible popout" data-collapsible="accordion">
+					{{#each transactions}}
+						{{> transaction}}
+					{{/each}}
+				</ul>
+				<script type="text/javascript">
+					$('.collapsible').collapsible({
+						accordion: false
+					});
+				</script>
+			</div>
+		</div>
+	</div>
+</template>
+<template name="transactions">
+	<h1>Transactions</h1>
+	<div class="row">
+		<ul class="collapsible popout" data-collapsible="accordion">
+			{{#each transactions}}
+				{{> transaction}}
+			{{/each}}
+		</ul>
+		<script type="text/javascript">
+			$('.collapsible').collapsible({
+				accordion: false
+			});
+		</script>
+	</div>
+</template>
+<template name="transaction">
+	<li>
+		{{#if isCurrentUser to}}
+		<div class="collapsible-header"><i class="material-icons">call_received</i>You received ${{amount}} from {{getUsername from}}</div>
+		{{else}}
+		<div class="collapsible-header"><i class="material-icons">call_made</i>You sent ${{amount}} to {{getUsername to}}</div>
+		{{/if}}
+		<div class="collapsible-body">
+			<p>
+				{{#if memo}}
+				<b>Memo</b> {{memo}}
+				{{else}}
+				<i>No memo recorded</i>
+				{{/if}}
+				<br>
+				{{date}}
+				{{#if tax}}
+				<br>
+				<i class="material-icons">done</i> ${{tax}} tax paid
+				{{/if}}
+			</p>
+		</div>
+	</li>
+</template>
+
+<template name="messages">
+	<h1>Messages</h1>
+	<div class="row">
+		<div class="col s3">
+			<h5>Users</h5>
+			<div class="collection">
+				{{#each users}}
+					{{> user}}
+				{{/each}}
+			</div>
+		</div>
+		<div class="col s9">
+			<h5>Conversation</h5>
+			{{#if selectedUser}}
+			<ul id="messages" class="collection" style="overflow-y:scroll; height: 200px">
+				{{#each messages}}
+					{{> message}}
+				{{/each}}
+			</ul>
+			<script type="text/javascript">
+				$('#messages').scrollTop($('#messages')[0].scrollHeight);
+			</script>
+			<form class="col s12">
+				<div class="input-field col s12">
+					<i class="material-icons prefix">mode_edit</i>
+					<input id="icon_prefix" type="text" class="validate" name="message">
+					<label for="icon_prefix">Send a message</label>
+				</div>
+			</form>
+			{{/if}}
+		</div>
+	</div>
+</template>
+
+<template name="user">
+	{{#if isSelectedUser username}}
+	<a href="/messages/{{username}}" class="collection-item user-select active">{{username}}</a>
+	{{else}}
+	<a href="/messages/{{username}}" class="collection-item user-select">{{username}}</a>
+	{{/if}}
+</template>
+<template name="message">
+	<li class="collection-item">
+		<span><b>{{from_username}}</b> {{message}}</span>
+	</li>
+</template>
+
+<template name="dashboard">
+	<h1>Dashboard</h1>
+	<div class="row">
+		<div class="col s12 m4">
+			<div class="card blue-grey darken-2">
+				<div class="card-content white-text">
+					<span class="card-title">Your balance</span>
+					<h2>${{balance}}</h2>
+				</div>
+				<div class="card-action">
+					<a href="/money">View money</a>
+				</div>
+			</div>
+		</div>
+		<div class="col s12 m8">
+			<h3>Recent activity</h3>
+			<table class="highlight">
+				<thead>
+					<tr>
+						<th data-field="who">Who</th>
+						<th data-field="activity">Activity</th>
+						<th data-field="action">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Bob</td>
+						<td>Sent you $100</td>
+						<td><a href="#">View transaction history</a></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</template>
+
+<template name="login">
+	<div class="row">
+		<div class="col s12 m6 l4 offset-m3 offset-l4">
+			<h2>Login</h2>
+			<p>or <a href="/register">create an account</a> if you don't have one</p>
+			<form class="col s12">
+				<div class="row">
+					<div class="input-field col s12">
+						<i class="material-icons prefix">account_circle</i>
+						<input id="icon_prefix" type="text" class="validate" name="username">
+						<label for="icon_prefix">Username</label>
+					</div>
+					<div class="input-field col s12">
+						<i class="material-icons prefix">vpn_key</i>
+						<input id="icon_prefix" type="password" class="validate" name="password">
+						<label for="icon_prefix">Password</label>
+					</div>
+					<button class="btn waves-effect waves-light" type="submit" name="submit">
+						Login <i class="material-icons right">send</i>
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</template>
+
+<template name="register">
+	<div class="row">
+		<div class="col s12 m6 l4 offset-m3 offset-l4">
+			<h2>Register</h2>
+			<p>or <a href="/login">login</a> if you already have an account</p>
+			<div class="row">
+				<form class="col s12">
+					<div class="input-field col s12">
+						<i class="material-icons prefix">account_circle</i>
+						<input id="icon_prefix" type="text" class="validate" name="username">
+						<label for="icon_prefix">Choose a Username</label>
+					</div>
+					<div class="input-field col s12">
+						<i class="material-icons prefix">vpn_key</i>
+						<input id="icon_prefix" type="password" class="validate" name="password">
+						<label for="icon_prefix">Choose a Password</label>
+					</div>
+					<button class="btn waves-effect waves-light" type="submit" name="submit">
+						Register <i class="material-icons right">send</i>
+					</button>
+				</form>
+			</div>
+		</div>
+	</div>
+</template>
