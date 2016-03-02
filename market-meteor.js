@@ -80,6 +80,9 @@ Router.route('/profile/:username', function() {
     }
   });
 });
+Router.route('/purchases', function() {
+  this.render('receipts');
+});
 
 Meteor.methods({
   addBankAccount: function() {
@@ -88,11 +91,19 @@ Meteor.methods({
       balance: 10000,
       tagline: 'A market user',
       description: '',
-      image: 'http://materializecss.com/images/sample-1.jpg',
+      image: 'https://i.imgur.com/ToHNDzr.jpg',
       trusted: false
     });
   },
   addItem: function(name, image, quantity, price, description, instructions) {
+    if (!name)
+      return Meteor.call('toast', 'error', 'Item name missing.');
+    if (!image)
+      image = 'https://i.imgur.com/ggnNZ2L.jpg';
+    if (isNaN(quantity))
+      quantity = 0;
+    if (isNaN(price))
+      price = 0;
     Items.insert({
       name: name,
       image: image,
@@ -101,6 +112,27 @@ Meteor.methods({
       description: description,
       instructions: instructions,
       owner: Meteor.userId()
+    });
+  },
+  deleteItem: function(id) {
+    Items.remove({
+      _id: id,
+      owner: Meteor.userId()
+    });
+  },
+  editItem: function(id, name, image, quantity, price, description, instructions) {
+    Items.update({
+      _id: id,
+      owner: Meteor.userId()
+    }, {
+      $set: {
+        name: name,
+        image: image,
+        quantity: parseInt(quantity),
+        price: parseInt(price * 100),
+        description: description,
+        instructions: instructions
+      }
     });
   },
   editAccount: function(image, tagline, description) {
@@ -361,7 +393,7 @@ if (Meteor.isClient) {
         sort: {
           date: -1
         },
-        limit: 5
+        limit: 4
       });
     }
   });
@@ -372,8 +404,33 @@ if (Meteor.isClient) {
       var amount = event.target.amount.value;
       var memo = event.target.memo.value;
       Meteor.call('sendMoney', to, amount, memo);
+      event.target.reset();
+      Materialize.updateTextFields();
     }
   });
+
+  Template.receipts.helpers({
+    receipts: function() {
+      var receipts = Receipts.find({}, {
+        sort: {
+          date: -1
+        }
+      }).fetch();
+      if (!receipts)
+        return null;
+      for (var i in receipts) {
+        receipts[i].buyer_username = Meteor.users.findOne({
+          _id: receipts[i].buyer
+        }).username;
+        receipts[i].seller_username = Meteor.users.findOne({
+          _id: receipts[i].seller
+        }).username;
+        receipts[i].price /= 100;
+      }
+      return receipts;
+    }
+  });
+
   Template.transactions.helpers({
     transactions: function() {
       return Transactions.find({}, {
@@ -432,6 +489,9 @@ if (Meteor.isClient) {
       if (isNaN(total))
         return null;
       return total;
+    },
+    viewMyItems: function() {
+      return Session.get('viewMyItems');
     }
   });
   Template.store.events({
@@ -444,6 +504,9 @@ if (Meteor.isClient) {
       var description = event.target.description.value;
       var instructions = event.target.instructions.value;
       Meteor.call('addItem', name, image, quantity, price, description, instructions);
+      event.target.reset();
+      Materialize.updateTextFields();
+      Session.set('viewMyItems', true);
     },
     'click #other': (event) => {
       Session.set('viewMyItems', false);
@@ -470,6 +533,19 @@ if (Meteor.isClient) {
       $('#confirmQuantity').val(1);
       Materialize.updateTextFields();
       Session.set('selectedItem', event.target.getAttribute('item'));
+    },
+    'submit #editItem': (event) => {
+      event.preventDefault();
+      var name = event.target.name.value;
+      var image = event.target.image.value;
+      var quantity = event.target.quantity.value;
+      var price = event.target.price.value;
+      var description = event.target.description.value;
+      var instructions = event.target.instructions.value;
+      Meteor.call('editItem', event.target.submit.getAttribute('item'), name, image, quantity, price, description, instructions);
+    },
+    'click .item-delete': (event) => {
+      Meteor.call('deleteItem', event.target.getAttribute('item'));
     }
   });
 
@@ -580,9 +656,23 @@ if (Meteor.isServer) {
     });
   });
   Meteor.publish('items', function() {
-    return Items.find({});
+    return Items.find({
+      $or: [{
+        owner: this.userId
+      }, {
+        quantity: {
+          $gt: 0
+        }
+      }]
+    });
   });
   Meteor.publish('receipts', function() {
-    return Receipts.find({});
+    return Receipts.find({
+      $or: [{
+        buyer: this.userId
+      }, {
+        seller: this.userId
+      }]
+    });
   });
 }

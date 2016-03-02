@@ -13,6 +13,7 @@
 			{{#if currentUser}}
 			<ul id="nav-mobile" class="right">
 				<li><a href="/store">Store</a></li>
+				<li><a href="/purchases">Purchases</a></li>
 				<li><a href="/money">Money</a></li>
 				<li><a href="/users">Users</a></li>
 				<li><a href="/messages">Messages</a></li>
@@ -129,8 +130,13 @@
 	<div class="row">
 		<div class="col s12">
 			<ul class="tabs">
-				<li class="tab col s6"><a href="#" class="active" id="other">Store</a></li>
+				{{#if viewMyItems}}
+				<li class="tab col s6"><a href="#" id="other">Store</a></li>
+				<li class="tab col s6"><a href="#" id="my" class="active">My items</a></li>
+				{{else}}
+				<li class="tab col s6"><a href="#" id="other" class="active">Store</a></li>
 				<li class="tab col s6"><a href="#" id="my">My items</a></li>
+				{{/if}}
 			</ul>
 			<script type="text/javascript">
 				$('ul.tabs').tabs();
@@ -163,7 +169,7 @@
 			</div>
 			<div class="input-field col s12">
 				<i class="material-icons prefix">attach_money</i>
-				<input id="icon_prefix" type="number" class="validate" name="price" step="0.01" min="0.01">
+				<input id="icon_prefix" type="number" class="validate" name="price" step="0.01" min="0">
 				<label for="icon_prefix">Price (each)</label>
 			</div>
 			<div class="input-field col s12">
@@ -215,6 +221,48 @@
 	</div>
 </template>
 <template name="item">
+	<div id="editModal" class="modal bottom-sheet">
+		<form id="editItem">
+		<div class="modal-content">
+			<h4>Edit item</h4>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">title</i>
+				<input id="icon_prefix" type="text" class="validate" name="name" value="{{name}}">
+				<label for="icon_prefix">Title</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">link</i>
+				<input id="icon_prefix" type="url" class="validate" name="image" value="{{image}}">
+				<label for="icon_prefix">Image link</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">add</i>
+				<input id="icon_prefix" type="number" class="validate" name="quantity" step="1" min="0" value="{{quantity}}">
+				<label for="icon_prefix">Quantity</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">attach_money</i>
+				<input id="icon_prefix" type="number" class="validate" name="price" step="0.01" min="0" value="{{price}}">
+				<label for="icon_prefix">Price (each)</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">mode_edit</i>
+				<textarea id="icon_prefix2" class="materialize-textarea active" name="description">{{description}}</textarea>
+				<label for="icon_prefix2">Description</label>
+			</div>
+			<div class="input-field col s12">
+				<i class="material-icons prefix">mode_edit</i>
+				<textarea id="icon_prefix2" class="materialize-textarea active" name="instructions">{{instructions}}</textarea>
+				<label for="icon_prefix2">Buyer instructions</label>
+			</div>
+		</div>
+			<div class="modal-footer">
+				<button item="{{_id}}" class="modal-action modal-close waves-effect waves-green btn-flat" type="submit" name="submit">Update Item</button>
+				<a item="{{_id}}" href="#" class="item-delete modal-action modal-close waves-effect waves-red btn-flat">Delete</a>
+				<a href="#" class="modal-action modal-close waves-effect waves-red btn-flat">Cancel</a>
+			</div>
+		</form>
+	</div>
 	<div class="col s12 m6 l4">
 		<div class="card" style="padding: 10px">
 			<div class="card-image waves-effect waves-block waves-light">
@@ -223,9 +271,9 @@
 			<div class="card-content">
 				<span class="card-title activator">{{name}}<i class="material-icons right">more_vert</i></span>
 				{{#if isCurrentUser owner}}
-				<p><a href="#">Edit</a><span class="right">${{price}} each</span></p>
+				<p><a item="{{_id}}" href="#editModal" class="modal-trigger3">Edit</a><span class="right">${{price}} each</span></p>
 				{{else}}
-				<p>Sold by {{owner_username}}<a item="{{_id}}" href="#confirmModal" class="buy-item modal-trigger right">Buy for ${{price}} each</a></p>
+				<p>Sold by {{owner_username}}<a item="{{_id}}" href="#confirmModal" class="buy-item modal-trigger2 right">Buy for ${{price}} each</a></p>
 				{{/if}}
 			</div>
 			<div class="card-reveal">
@@ -235,6 +283,11 @@
 				<p>{{quantity}} available</p>
 			</div>
 		</div>
+		<script type="text/javascript">
+			$('.modal-trigger2[item=\'{{_id}}\']').leanModal();
+			$('.modal-trigger3[item=\'{{_id}}\']').leanModal();
+			Materialize.updateTextFields();
+		</script>
 	</div>
 </template>
 
@@ -293,6 +346,36 @@
 			</div>
 		</div>
 	</div>
+</template>
+<template name="receipts">
+	<h1>Purchases</h1>
+	<div class="row">
+		<ul class="collapsible popout" data-collapsible="accordion">
+			{{#each receipts}}
+				{{> receipt}}
+			{{/each}}
+		</ul>
+		<script type="text/javascript">
+			$('.collapsible').collapsible({
+				accordion: false
+			});
+		</script>
+	</div>
+</template>
+<template name="receipt">
+	<li>
+		<div class="collapsible-header"><i class="material-icons">receipt</i>{{buyer_username}} purchased {{name}}</div>
+		<div class="collapsible-body">
+			<p>
+				<b>Receipt ID</b> {{_id}}<br>
+				<b>Sold by</b> {{seller_username}}<br>
+				<b>Description</b> {{description}}<br>
+				<b>Quantity</b> {{quantity}}<br>
+				<b>Price</b> ${{price}} each<br>
+				{{date}}
+			</p>
+		</div>
+	</li>
 </template>
 <template name="transactions">
 	<h1>Transactions</h1>
